@@ -1,0 +1,18 @@
+TODO:
+* Generalize the processing step so that you can replay processing (eg of failed tags) without
+  tag processing.
+* Make sure HTML can't get injected (it can currently inside a failed tag)
+* Handle WHAT_ENCL so that [code], [url] and [img] can be handled (in adition to how they're handled now)
+  more in line with other bbcode implementations. Basically this would have to create an extra buffer that
+  we collect input into without processing (except for close tag searching )until the close tag, and then
+  pass to the end_N of the enclosure tag. If it DUMPs (eg bad URL) we have to replay the buffer with full
+  processing after the tag.
+* Create a tree-based match-replace system (input would be a list of strings, which would be
+  broken into a tree for matching, and processed in-line with the general processing). This would
+  be fore simple replacements (swear words?) and smilies like :-) instead of :smile:. This would work
+  from the START state, and enter a TREE state where it feeds the tree matcher a character a time until
+  it succeeds (and returns a replacement) or fails (and DUMPs) or reaches the end of input which is the
+  same as a DUMP.
+* Make the HTML fragments be stored all in one place rather than amongst the code, so they could be separated
+  entirely from the processing step (and overridden in order to create different outputs).
+
