@@ -5,7 +5,7 @@ import string
 import sys
 from cStringIO import StringIO
 
-DEBUG=True
+DEBUG=False
 
 def urlsafe(url):
     """Simple little thing to prevent badness in urls:
@@ -153,7 +153,7 @@ class PPURLTag(PPTag):
 
 
 class PPDecode:
-     # stub, replace with hashtree
+    # stub, replace with hashtree
     def handle_smile(self, smile):
         if smile == ':smile:':
             return WHAT_CONT, ':-)'
@@ -394,4 +394,3 @@ class PPDecode:
         outs = "<p>"+self.outp.getvalue()+"</p>"
         self.outp.close()
         return outs
-
