@@ -17,7 +17,7 @@ urlmatch = re.compile('^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+(:[0-9]+)?\/|\/
 
 WHAT_PUSH = 0 # please push my tag name into the list
 WHAT_CONT = 1 # just continue, one-off
-WHAT_ENCL = 2 # please give me the enclosure once you hit my end tag (only for IMG, URL right now)
+WHAT_ENCL = 2 # please give me the enclosure once you hit my end tag (only for IMG, URL right now) NOT IMPLEMENTED
 WHAT_DUMP = 3 # there was an error in my definition so just dump it into the output stream
 
 (ST_START, ST_BEGIN_TAG, ST_COLLECT_TAG, ST_COLLECT_OPT, ST_CR, ST_P, ST_BEGIN_SMILE, ST_COLLECT_SMILE) = range(8)
@@ -50,6 +50,8 @@ class PPStateMachine:
     def State(self):
         return self.state
 
+
+# This is a generic tag object we descend from for most standardly-behaving tags.
 class PPTag:
     def __init__(self, tag):
         self._tag = tag
@@ -72,7 +74,8 @@ class PPTag:
 
         return (start, end)
 
-
+# This object cooks normal tag behavior (eg is generic [something]...[/something]
+# tags with nothing special between them.
 class PPEasyTag(PPTag):
     def __init__(self, bbtag, htmltag):
         PPTag.__init__(self, bbtag)
@@ -103,7 +106,7 @@ class PPQuoteTag(PPTag):
     def end(self):
         return "</blockquote>"
 
-# to properly support [code], we need ENCL to work so that stuff comes through unmolested
+# to properly support [code], we need ENCL to work so that the contents come through unaltered.
 class PPCodeTag(PPTag):
     def __init__(self, codeclass="code"):
         PPTag.__init__(self, 'code')
@@ -153,13 +156,13 @@ class PPURLTag(PPTag):
 
 
 class PPDecode:
+    """A bbcode subset to HTML converter."""
     # stub, replace with hashtree
     def handle_smile(self, smile):
         if smile == ':smile:':
             return WHAT_CONT, ':-)'
         return WHAT_DUMP, ''
-
-
+    # the table of all tags supported is created here.
     tagHandlers = [
         PPSizeTag(),
         PPQuoteTag(),
@@ -189,7 +192,7 @@ class PPDecode:
     penstack = []
 
     def __init__(self):
-        # load easy tags
+        # construct the map of [tag] -> tag handling object
         for i in self.tagHandlers:
             self.tagMap[i.getTag()] = i.getSpec()
 
@@ -257,7 +260,7 @@ class PPDecode:
             st.ChangeState(ST_BEGIN_SMILE)
             st.tagcollection.write(ch)
             st.tagname += ch
-        # we replace <, > and & with entities
+        # we replace <, > and & with entities - this should be handled by the smiley tree though
         elif ch == '&':
             self.outp.write('&amp;')
         elif ch == '<':
@@ -274,10 +277,17 @@ class PPDecode:
         self.buffer = st + self.buffer[self.chn:]
         self.chn = 0
 
-    def decode(self,s):
+    # this is where the action happens. basically we pass a string to the decoder and it returns a string of HTML.
+    def decode(self,ppcodestring):
+        """Process bbcode subset into HTML.
+
+        Keyword arguments:
+        ppcodestring -- a string of ppcode to decode into HTML.
+
+        """
         st = PPStateMachine()
         self.outp = StringIO()
-        self.buffer = s
+        self.buffer = ppcodestring
         self.penstack = []
         self.chn = 0
         while (self.chn < len(self.buffer)):
